@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Canvas Game</title>
+        <script src="https://kit.fontawesome.com/524f54d6b8.js" crossorigin="anonymous"></script>
+        <style>
+
+
+        </style>
+    </head>
+    <body>
+        
+        
+    
+        <script>
+
+            var car1;
+            var obs = [];
+            window.onload = function(){
+                 car1 = new component(50,50,'red',50,200);
+                canvasGame.startGame();
+            }
+
+            var canvasGame = {
+
+                canvas : document.createElement('canvas'),
+                
+                startGame : function(){
+                    this.canvas.width = 800;
+                    this.canvas.height = 500;
+                    this.context = this.canvas.getContext('2d');
+                    this.canvas.style.border = '1px solid black';
+                    document.body.insertBefore(this.canvas,document.body.childNodes[0]);
+                    this.frames = 0;
+                    this.interval = setInterval(function(){
+                        updateCanvas();
+                    },20)
+
+                    window.addEventListener('keydown',function(ev){
+                        
+                        canvasGame.keys =canvasGame.keys|| [];
+                        canvasGame.keys[ev.keyCode] = true;
+                        
+                    });
+
+                    window.addEventListener('keyup',function(ev){
+
+                        canvasGame.keys[ev.keyCode] = false;
+                    });
+
+
+                    window.addEventListener('mousemove',function(evt){
+
+                        canvasGame.x = evt.pageX;
+                        canvasGame.y = evt.pageY;
+                    });
+                },
+
+                clear : function(){
+
+                    this.context.clearRect(0 ,0 ,800 , 500);
+                    
+                },
+
+                nframes : function(n){
+                    if((canvasGame.frames/n) %1 ==0){
+                        return true;
+                    }else{return false;}
+                }
+
+            }
+
+
+
+            var component = function(width,height,color,x,y){
+
+                this.width  = width;
+                this.height = height;
+                this.color = color;
+                this.x = x;
+                this.y = y;
+
+                this.speedX = 0;
+                this.speedY = 0;
+
+                this.pos = function(){
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                }
+
+                this.update = function(){
+                var ctx = canvasGame.context;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x,this.y,this.width,this.height);
+                }
+                
+                this.clear = function(){
+                    this.speedX = 0;
+                    this.speedY = 0;
+                }
+
+                this.stop = function(){
+                    clearInterval(canvasGame.interval);
+                }
+
+                this.crashWith = function(otherObj){
+                    var left = this.x;
+                    var right = this.x +this.width;
+                    var top = this.y;
+                    var bottom = this.y+this.height;
+
+                    var objleft = otherObj.x;
+                    var objright = otherObj.x +otherObj.width;
+                    var objtop = otherObj.y;
+                    var objbottom = otherObj.y+otherObj.height;
+
+                    if(right< objleft || left > objright || bottom< objtop || top>objbottom){
+                        return false;
+                    }else{return true;}
+                }
+            }
+
+
+            var tank = function(x,y){
+                
+
+
+                this.speedX =0;
+                this.speedY = 0;
+                this.x =x;
+                this.y =y;
+                
+                var t1 = new component(50,60,'green',x,y);
+                var t2 = new component(20,20,'green',x+50,y+20);
+
+                this.shoot = new component(10,10,'green',t1.x+t1.width+t2.width,t1.y+25);
+
+                
+                this.update = function(){
+                    t1.speedX = this.speedX;
+                    t2.speedX = this.speedX;
+                    t1.speedY = this.speedY;
+                    t2.speedY = this.speedY;
+                    this.x = t1.x;
+                    this.y = t1.y;
+                    t1.update();
+                    t2.update();
+                } 
+
+                this.pos = function(){
+                    t1.pos();
+                    t2.pos();
+                }
+
+                this.clear = function(){
+                    this.speedX=0;
+                    this.speedY=0;
+                    t1.clear();
+                    t2.clear();
+                }
+
+                this.stop = function(){
+
+                    t1.stop();
+                }
+
+
+                this.crashWith = function(obj){
+                    if(t1.crashWith(obj)){
+                        return true;
+                    }
+
+                    if(t2.crashWith(obj)){
+                        return true;
+                    }
+
+                    
+                }
+
+                
+            }
+
+            var t1 = new tank(50,100);
+            var flage = true;
+            
+            function updateCanvas(){
+
+
+                var maxheight,maxgap,minheight,mingap,height,gap;
+
+                for(var elem of obs){
+                    
+                    if(t1.crashWith(elem)){
+                    t1.stop();
+                    return;
+                }
+
+                }
+                   
+                for(var i=0;i<obs.length;i++){
+                    
+                    if(t1.shoot.crashWith(obs[i])){
+                    flage=true;
+                    obs.splice(i,1);
+                }
+                }
+
+            
+                canvasGame.clear();
+
+
+                if(canvasGame.keys&&canvasGame.keys[37]){
+                    t1.speedX = -2;
+                    
+                }else if(canvasGame.keys&&canvasGame.keys[39]){
+                    t1.speedX = 2;
+                }else{
+                    t1.speedX=0;
+                }
+
+
+                if(canvasGame.keys&&canvasGame.keys[38]){
+                    t1.speedY = -2;
+                }else if(canvasGame.keys&&canvasGame.keys[40]){
+                    t1.speedY = 2;
+                }else{
+                    t1.speedY=0;
+                }
+
+                
+                if(canvasGame.keys && canvasGame.keys[17]&&flage){
+
+                        t1.shoot = new component(10,10,'green',t1.x+70,t1.y+25);
+                        flage = false;
+                        t1.shoot.speedX=5;
+                    
+                        
+                }
+
+                if(t1.shoot.x>=850){
+                    flage=true;
+                }
+                
+                if(!flage){
+                    t1.shoot.pos();
+                    t1.shoot.update();
+                }
+
+                t1.pos();
+                t1.update();
+
+                
+
+                canvasGame.frames+=1;
+                
+                if(canvasGame.nframes(150)||canvasGame.frames==1){
+                    console.log(canvasGame.frames);
+                    maxheight = 200;
+                    minheight = 50;
+                    height = Math.floor((Math.random()*(maxheight-minheight+1))+minheight);
+
+                    mingap = 100;
+                    maxgap = 250;
+                    gap = Math.floor((Math.random()*(maxgap-mingap+1))+mingap);
+                
+                    obs.push(new component(20,height,'blue',800,0));
+                    obs.push(new component(20,400,'blue',800,height+gap));
+                    
+                }
+
+
+                for(var elem of obs){
+
+                    elem.x +=-1;
+                    elem.update();
+                    
+                }
+                
+            }
+
+            
+
+        </script>
+
+    </body>
+</html>
